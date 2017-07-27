@@ -1,5 +1,4 @@
-
-var log4js  = require('log4js');
+var log4js = require('log4js');
 var Dict = require("collections/dict");
 var util = require("util");
 
@@ -24,12 +23,12 @@ var logHelper;
  */
 function init(processName, environment, config) {
 
-    if(isInitialized){
+    if (isInitialized) {
         return;
     }
-	
-    var fs      = require('fs');
-    var path    = require('path');
+
+    var fs = require('fs');
+    var path = require('path');
     var logpath = path.join('logs');
     var logger;
 
@@ -56,7 +55,7 @@ function init(processName, environment, config) {
         process.on('exit', function(code) {
             logger.fatal('About to exit with code:', code);
             console.log('About to exit with code:', code);
-          });
+        });
 
         process.on('uncaughtException', function(error) {
             var exLogger = log4js.getLogger('exceptions');
@@ -70,13 +69,15 @@ function init(processName, environment, config) {
             logger.info("-------------------------------------------------------------------------------");
             logger.info();
             //NodeJS guideline for uncaught exceptions
-            log4js.shutdown(function() { process.exit(1); });  // get full logs on disk before exiting
+            log4js.shutdown(function() {
+                process.exit(1);
+            }); // get full logs on disk before exiting
         });
     }
 
-     logHelper = log4js.getLogger('loggingHelper');
+    logHelper = log4js.getLogger('loggingHelper');
 
-     return logger;
+    return logger;
 
 }
 
@@ -90,21 +91,21 @@ function init(processName, environment, config) {
  */
 function getLogger(name) {
     var logger = loggers.get(name);
-    
+
     if (!validate.isValid(logger)) {
         logger = log4js.getLogger(name);
-        
+
         if (!logger.level) {
             logger.setLevel(log4js.getDefaultLogger().level);
-        }        
-        
+        }
+
         loggers.set(name, logger);
-        
-        if(logHelper){
+
+        if (logHelper) {
             logHelper.info('Created logger for %s at level %s', name, logger.level);
         }
     }
-    
+
     return logger;
 }
 
@@ -121,136 +122,131 @@ function getLoggers() {
 TODO: Format log messages to json objects that can be consumed by elk
 **/
 
-function logMethodEntry(logger, method){
-   /* if(logger.isLevelEnabled(log4js.levels.TRACE) && logger && method){
-        logger.trace('method : %s entry',method);
-    }*/
+function logMethodEntry(logger, method) {
+    /* if(logger.isLevelEnabled(log4js.levels.TRACE) && logger && method){
+         logger.trace('method : %s entry',method);
+     }*/
 
-    if(validate.isValid(logger) && validate.isValid(method)){
-    logger.trace('%s : entry',method);
+    if (validate.isValid(logger) && validate.isValid(method)) {
+        logger.trace('%s : entry', method);
     }
 }
 
-function logError(logger, method, msg, json){
-    if(validate.isValid(logger) && validate.isValid(method) && validate.isValid(msg)){
-        if(typeof json === 'undefined'){
+function logError(logger, method, msg, json) {
+    if (validate.isValid(logger) && validate.isValid(method) && validate.isValid(msg)) {
+        if (typeof json === 'undefined') {
             json = {};
         }
 
-        if(validate.isValidJson(json)){
-            logger.error('%s : %s - %j',method, msg, json);
+        if (validate.isValidJson(json)) {
+            logger.error('%s : %s - %j', method, msg, json);
+        } else {
+
+            logger.error('%s : %s - %s', method, msg, logObject(json));
         }
-        else{
-           
-            logger.error('%s : %s - %s',method, msg, logObject(json));
-        }
-       /* if(typeof msg === 'string'){
-        logger.error('%s : %s - %j',method, msg, json);
-        }
-        else{
-            logger.error('%s - %j',method, msg);
-        }*/
+        /* if(typeof msg === 'string'){
+         logger.error('%s : %s - %j',method, msg, json);
+         }
+         else{
+             logger.error('%s - %j',method, msg);
+         }*/
     }
 }
 
-function logMessage(logger, method, msg, json, level){
-    if(validate.isValid(logger) && validate.isValid(method) && validate.isValid(msg)){
+function logMessage(logger, method, msg, json, level) {
+    if (validate.isValid(logger) && validate.isValid(method) && validate.isValid(msg)) {
 
         var isJson = false;
-        if(validate.isValidJson(json)){
+        if (validate.isValidJson(json)) {
             isJson = true;
         }
 
-        
-        if(level === log4js.levels.TRACE){
-            
-            if(isJson){
-                logger.trace('%s : %s - %j',method, msg, json);
+
+        if (level === log4js.levels.TRACE) {
+
+            if (isJson) {
+                logger.trace('%s : %s - %j', method, msg, json);
+            } else {
+                logger.trace('%s : %s - %s', method, msg, logObject(json));
             }
-            else{
-                logger.trace('%s : %s - %s',method, msg, logObject(json));
+        } else if (level === log4js.levels.DEBUG) {
+
+            if (isJson) {
+                logger.debug('%s : %s - %j', method, msg, json);
+            } else {
+                logger.debug('%s : %s - %s', method, msg, logObject(json));
             }
-        }
-        else if(level === log4js.levels.DEBUG){
-            
-            if(isJson){
-                logger.debug('%s : %s - %j',method, msg, json);
-            }
-            else{
-                logger.debug('%s : %s - %s',method, msg, logObject(json));
-            }
-        }
-        else{
-            
-            if(isJson){
-                logger.info('%s : %s - %j',method, msg, json);
-            }
-            else{
-                logger.info('%s : %s - %s',method, msg, logObject(json));
+        } else {
+
+            if (isJson) {
+                logger.info('%s : %s - %j', method, msg, json);
+            } else {
+                logger.info('%s : %s - %s', method, msg, logObject(json));
             }
         }
-        
-       
+
+
     }
 }
 
-function logRequest(logger, method, request){
-   // if( logger.isLevelEnabled(log4js.levels.TRACE)){
-        if(validate.isValid(logger) && validate.isValid(method) && validate.isValid(request)){
-        logger.trace("%s - url\"%s\" headers:%s  params:%s body:%s",method, request.originalUrl, 
-                logObject(request.headers), logObject(request.params), logObject(request.body ));
-        }
-   // }
-    
+function logRequest(logger, method, request) {
+    // if( logger.isLevelEnabled(log4js.levels.TRACE)){
+    if (validate.isValid(logger) && validate.isValid(method) && validate.isValid(request)) {
+        logger.trace("%s - url\"%s\" headers:%s  params:%s body:%s", method, request.originalUrl,
+            logObject(request.headers), logObject(request.params), logObject(request.body));
+    }
+    // }
+
 }
 
-function logEntryAndInput(logger, method, input){
+function logEntryAndInput(logger, method, input) {
     /*if( logger.isLevelEnabled(log4js.levels.TRACE)){
         logger.trace("method : %s entry",method);
         logger.trace("method : params - %j ",input); 
     }*/
 
-       if(validate.isValid(logger) && validate.isValid(method) && validate.isValid(input)){
-            logger.trace("%s : entry ", method);
-            logger.trace("%s : params - %j ",method, input); 
-        }
-  
-    
+    if (validate.isValid(logger) && validate.isValid(method) && validate.isValid(input)) {
+        logger.trace("%s : entry ", method);
+        logger.trace("%s : params - %j ", method, input);
+    }
+
+
 }
 
-function logJson(logger, method, json){
-   // if( logger.isLevelEnabled(log4js.levels.TRACE)){
-    if(validate.isValid(logger) && validate.isValid(method) && validate.isValid(json)){
-        if(validate.isValidJson(json)){
-            logger.trace('%s : %j',method, json);
-        }
-        else{
-            logger.trace('%s : %s',method, logObject(json));
+function logJson(logger, method, json) {
+    // if( logger.isLevelEnabled(log4js.levels.TRACE)){
+    if (validate.isValid(logger) && validate.isValid(method) && validate.isValid(json)) {
+        if (validate.isValidJson(json)) {
+            logger.trace('%s : %j', method, json);
+        } else {
+            logger.trace('%s : %s', method, logObject(json));
         }
     }
-        
-   // }
-    
+
+    // }
+
 }
 
 
-function logObject(o,depth){
-    if(typeof depth !== 'number'){
-        depth =1;
+function logObject(o, depth) {
+    if (typeof depth !== 'number') {
+        depth = 1;
     }
-    return util.inspect(o,{depth:depth}).replace(/(\r\n|\n|\r)/gm,"")
+    return util.inspect(o, {
+        depth: depth
+    }).replace(/(\r\n|\n|\r)/gm, "")
 };
 
 
 module.exports = {
-        initialize : init,
-        getLogger: getLogger,
-        getLoggers: getLoggers,
-        logRequest: logRequest,
-        logMethodEntry: logMethodEntry,
-        logJson: logJson,
-        logEntryAndInput: logEntryAndInput,
-        logMessage: logMessage,
-        logError: logError
-        
+    initialize: init,
+    getLogger: getLogger,
+    getLoggers: getLoggers,
+    logRequest: logRequest,
+    logMethodEntry: logMethodEntry,
+    logJson: logJson,
+    logEntryAndInput: logEntryAndInput,
+    logMessage: logMessage,
+    logError: logError
+
 };

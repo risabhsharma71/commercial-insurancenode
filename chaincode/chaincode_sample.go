@@ -21,68 +21,70 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
+	//"time"
 	//"strings"
-	//"reflect"
+	
 
+	
+     
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-var userIndexStr = "_userindex"
+var userIndexStr = "_userindex"  
 
-//var campaignIndexStr= "_campaignindex"
-//var transactionIndexStr= "_transactionindex"
 
-type User struct {
-	Id       int    `json:"id"`
-	Name     string `json:"name"` //the fieldtags of user are needed to store in the ledger
-	Email    string `json:"email"`
-	Phone    int    `json:"phone"`
-	Pan      string `json:"pan"`
-	Aadhar   int    `json:"aadhar"`
-	Upi      string `json:"upi"`
-	UserType string `json:"usertype"`
-	PassPin  int    `json:"passpin"`
-}
+type Claim struct {
+	Id                  int      `json:"userid"`
+    ClaimNo             int      `json:"claimno"`
+	ExaminerId          int      `json:"examinerid"`
+	ClaimAdjusterId     int      `json:"claimadjusterid"`
+	PublicAdjusterId    int      `json:"publicadjusterid"`
+	Status   	        string   `json:"status"`
+	Title	            string   `json:"title"`
+    DamageDetails	        string   `json:"damagedetails"`
+    TotalDamageValue 	int      `json:"totaldamagevalue"`
+    TotalClaimValue 	int      `json:"totalclaimvalue"`
+	Documents	        []Document   `json:"document"`
+    AssessedDamageValue	int       `json:"assesseddamagevalue"`
+    AssessedClaimValue	int       `json:"assessedclaimvalue"`
+    Negotiationvalue	[]Negotiation  `json:"negotiationlist"`
+    ApprovedClaim	    int       `json:"approvedclaim"`
 
-type AllUsers struct {
-	Userlist []User `json:"userlist"`
-}
+   }
 
-type SessionAunthentication struct {
-	Token string `json:"token"`
-	Email string `json:"email"`
-}
-type Session struct {
-	StoreSession []SessionAunthentication `json:"session"`
+type ClaimList struct{
+	Claimlist []Claim `json:"claimlist"`// contains array of claims
 }
 
-type BidInfo struct {
-	Id              int     `json:"id"`
-	BidCreationTime int64   `json:"bidcreationtime"`
-	CampaignId      int     `json:"campaignid"`
-	UserId          string  `json:"userid"`
-	Quote           float64 `json:"quote"`
+type Document struct{
+
+ClaimId             int      `json:"claimid"`
+FIRCopy             string   `json:"fircopy"`//the fieldtags of User Document hashvalue are needed to store in the ledger
+Photos              string   `json:"photos"`
+Certificates        string   `json:"certificates"`
+
+
 }
-type CreateCampaign struct {
-	Status           string    `json:"status"`
-	Id               int       `json:"id"`
-	UserId           string    `json:"userid"`
-	Title            string    `json:"title"`
-	Description      string    `json:"description"`
-	LoanAmount       int       `json:"loanamount"`
-	Interest         float64   `json:"interest"`
-	NoOfTerms        int       `json:"noOfTerms"`
-	Bidlist          []BidInfo `json:"bidlist"`
-	LowestBid        BidInfo   `json:"bidinfo"`
-	NotermsRemaining int       `json:"notermsremaining"`
+
+type Negotiation struct{
+Id                  int      `json:"id"`
+
+Negotiations        int       `json:"negotiationvalue"`//the fieldtags of claim Negotiation are needed to store in the ledger
+AsPerTerm2B         string      `json:"asperterm"`
 }
-type CampaignList struct {
-	Campaignlist []CreateCampaign `json:"campaignlist"`
-}
+ 
+type ExaminedUpdate struct{
+Id                  int       `json:"id"`
+ClaimId             int        `json:"claimid"`
+AssessedDamageValue	int       `json:"assesseddamagevalue"`//the field tags of examiner
+AssessedClaimValue	int       `json:"assessedclaimvalue"`
+
+} 
 
 type SimpleChaincode struct {
 }
+
+// Main Function
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
@@ -91,8 +93,9 @@ func main() {
 	}
 }
 
+// Init Function - reset all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-
+	
 	//_, args := stub.GetFunctionAndParameters()
 	var Aval int
 	var err error
@@ -108,7 +111,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	// Write the state to the ledger
-	err = stub.PutState("abc", []byte(strconv.Itoa(Aval))) //making a test var "abc", I find it handy to read/write to it right away to test the network
+	err = stub.PutState("abc", []byte(strconv.Itoa(Aval)))   //making a test var "abc" to read/write into ledger to test the network
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +122,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
+	
 
 	return nil, nil
 }
@@ -128,28 +132,31 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	fmt.Println("invoke is running " + function)
 
 	// Handle different functions
-	if function == "init" {
+	if function == "init" {                //initialize the chaincode state, used as reset
 		return t.Init(stub, "init", args)
 	} else if function == "write" {
-		return t.write(stub, args)
+		return t.write(stub, args)          //writes a value to the chaincode state
 
-	} else if function == "registerUser" {
-		return t.registerUser(stub, args)
+	} else if function == "notifyClaim" {  //writes claim details with status notified in ledger
+		return t.notifyClaim(stub, args)
 
-	} else if function == "Delete" {
+	} else if function == "createClaim" {  //writes  claim details with status approved in ledger
+		return t.createClaim(stub, args)
+
+	} else if function == "Delete" {        //deletes an entity from its state
 		return t.Delete(stub, args)
 
-	} else if function == "SaveSession" {
-		return t.SaveSession(stub, args)
+	} else if function == "UploadDocuments" {        //upload the dcument hash value 
+		return t.UploadDocuments(stub, args)
 
-	} else if function == "CreateCampaign" {
-		return t.CreateCampaign(stub, args)
+	}  else if function == "ExamineClaim" {        //Examine and updtaes the claim with status examined
+		return t.ExamineClaim(stub, args)
 
-	} else if function == "PostBid" {
-		return t.PostBid(stub, args)
+	} else if function == "ClaimNegotiation" {        //claim negotiations takes place between public adjuster and claim adjuster
+		return t.ClaimNegotiation(stub, args)
 
-	} else if function == "UpdatePayment" {
-		return t.UpdatePayment(stub, args)
+	} else if function == "approveClaim" {        //after negotiation claim amount is finalised and approved
+		return t.approveClaim(stub, args)
 
 	}
 
@@ -168,7 +175,7 @@ func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string)
 		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the key and value to set")
 	}
 
-	key = args[0] //rename for funsies
+	key = args[0] 
 	value = args[1]
 	err = stub.PutState(key, []byte(value)) //write the variable into the chaincode state
 	if err != nil {
@@ -182,14 +189,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	fmt.Println("query is running " + function)
 
 	// Handle different functions
-	if function == "readuser" { //read a variable
+	if function == "readuser" { //read values for particular keys
 		return t.readuser(stub, args)
-	} else if function == "login" {
-		return t.login(stub, args)
-
-	} else if function == "auntheticatetoken" {
-		return t.SetUserForSession(stub, args)
-
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -201,13 +202,13 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) readuser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var name, jsonResp string
 	var err error
-
+    
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the var to query")
 	}
 
 	name = args[0]
-	valAsbytes, err := stub.GetState(name) //get the var from chaincode state
+	valAsbytes, err := stub.GetState(name) //get the key value from chaincode state
 	if err != nil {
 		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
 		return nil, errors.New(jsonResp)
@@ -216,375 +217,190 @@ func (t *SimpleChaincode) readuser(stub shim.ChaincodeStubInterface, args []stri
 	return valAsbytes, nil //send it onward
 }
 
-func (t *SimpleChaincode) registerUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var err error
-
-	if len(args) != 9 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
-	}
-
-	//input sanitation
-	fmt.Println("- start registration")
-	if len(args[0]) <= 0 {
-		return nil, errors.New("1st argument must be a non-empty string")
-	}
-	if len(args[1]) <= 0 {
-		return nil, errors.New("2nd argument must be a non-empty string")
-	}
-	if len(args[2]) <= 0 {register
-		return nil, errors.New("3rd argument must be a non-empty string")
-	}
-	if len(args[3]) <= 0 {
-		return nil, errors.New("4th argument must be a non-empty string")
-	}
-	if len(args[4]) <= 0 {
-		return nil, errors.New("5th argument must be a non-empty string")
-	}
-	if len(args[5]) <= 0 {
-		return nil, errors.New("6th argument must be a non-empty string")
-	}
-	if len(args[6]) <= 0 {
-		return nil, errors.New("7th argument must be a non-empty string")
-	}
-	if len(args[7]) <= 0 {
-		return nil, errors.New("7th argument must be a non-empty string")
-	}
-	user := User{}
-	user.Id, err = strconv.Atoi(args[0])
-	if err != nil {
-		return nil, errors.New("Failed to get id as cannot convert it to int")
-	}
-	user.Name = args[1]
-	user.Email = args[2]
-	user.Phone, err = strconv.Atoi(args[3])
-	if err != nil {
-		return nil, errors.New("Failed to get phone as cannot convert it to int")
-	}
-	user.Pan = args[4]
-	user.Aadhar, err = strconv.Atoi(args[5])
-	if err != nil {
-		return nil, errors.New("Failed to get aadhar as cannot convert it to int")
-	}
-	user.UserType = args[6]
-	user.Upi = args[7]
-	user.PassPin, err = strconv.Atoi(args[8])
-	if err != nil {
-		return nil, errors.New("Failed to get passpin as cannot convert it to int")
-	}
-
-	fmt.Println("user", user)
-
-	UserAsBytes, err := stub.GetState("getusers")
-	if err != nil {
-		return nil, errors.New("Failed to get users")
-	}
-	var allusers AllUsers
-	json.Unmarshal(UserAsBytes, &allusers) //un stringify it aka JSON.parse()
-
-	allusers.Userlist = append(allusers.Userlist, user)
-	fmt.Println("allusers", allusers.Userlist) //append to allusers
-	fmt.Println("! appended user to allusers")
-	jsonAsBytes, _ := json.Marshal(allusers)
-	fmt.Println("json", jsonAsBytes)
-	err = stub.PutState("getusers", jsonAsBytes) //rewrite allusers
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("- end user_register")
-	return nil, nil
-}
-
-func (t *SimpleChaincode) login(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var err error
-
-	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2")
-	}
-
-	//input sanitation
-	fmt.Println("- login")
-	if len(args[0]) <= 0 {
-		return nil, errors.New("1st argument must be a non-empty string")
-	}
-	if len(args[1]) <= 0 {
-		return nil, errors.New("2nd argument must be a non-empty string")
-	}
-
-	emailid := args[0]
-
-	passpin, err := strconv.Atoi(args[1])
-	if err != nil {
-		return nil, errors.New("Failed to get passpin as cannot convert it to int")
-	}
-
-	UserAsBytes, err := stub.GetState("getusers")
-	if err != nil {
-		return nil, errors.New("Failed to get users")
-	}
-	var allusers AllUsers
-	json.Unmarshal(UserAsBytes, &allusers) //un stringify it aka JSON.parse()
-
-	for i := 0; i < len(allusers.Userlist); i++ {
-
-		if allusers.Userlist[i].Email == emailid && allusers.Userlist[i].PassPin == passpin {
-
-			return []byte(allusers.Userlist[i].Email), nil
-		}
-	}
-	return nil, nil
-}
-
 func (t *SimpleChaincode) Delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
-
+	
 	name := args[0]
-	err := stub.DelState(name) //remove the key from chaincode state
+	err := stub.DelState(name)													//remove the key from chaincode state
 	if err != nil {
 		return nil, errors.New("Failed to delete state")
 	}
 
-	//get the marble index
+	//get the user index
 	userAsBytes, err := stub.GetState(userIndexStr)
 	if err != nil {
 		return nil, errors.New("Failed to get array index")
 	}
 	var userIndex []string
-	json.Unmarshal(userAsBytes, &userIndex) //un stringify it aka JSON.parse()
-
-	//remove marble from index
-	for i, val := range userIndex {
+	json.Unmarshal(userAsBytes, &userIndex)								//un stringify it aka JSON.parse()
+	
+	//remove user from index
+	for i,val := range userIndex{
 		fmt.Println(strconv.Itoa(i) + " - looking at " + val + " for " + name)
-		if val == name { //find the correct marble
-
-			userIndex = append(userIndex[:i], userIndex[i+1:]...) //remove it
-			for x := range userIndex {                            //debug prints...
+		if val == name{															//find the correct index
+		
+			userIndex = append(userIndex[:i], userIndex[i+1:]...)			//remove it
+			for x:= range userIndex{											//debug prints...
 				fmt.Println(string(x) + " - " + userIndex[x])
 			}
 			break
 		}
 	}
-	jsonAsBytes, _ := json.Marshal(userIndex) //save new index
+	jsonAsBytes, _ := json.Marshal(userIndex)									//save new index
 	err = stub.PutState(userIndexStr, jsonAsBytes)
 	return nil, nil
 }
-func (t *SimpleChaincode) SaveSession(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
+//notification of claim from insured takes place
+func (t *SimpleChaincode) notifyClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
-	fmt.Println("running write()")
 
-	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2.")
-	}
-	if len(args[0]) <= 0 {
-		return nil, errors.New("1st argument must be a non-empty string")
-	}
-	if len(args[1]) <= 0 {
-		return nil, errors.New("2nd argument must be a non-empty string")
-	}
-	authsession := SessionAunthentication{}
-	authsession.Token = args[0]
-	authsession.Email = args[1]
-	UserAsBytes, err := stub.GetState("savesession")
-	if err != nil {
-		return nil, errors.New("Failed to get users")
-	}
-	var session Session
-	json.Unmarshal(UserAsBytes, &session) //un stringify it aka JSON.parse()
-
-	session.StoreSession = append(session.StoreSession, authsession)
-	fmt.Println("allsessions", session.StoreSession) //append to allusers
-	fmt.Println("! appended user to allsessions")
-	jsonAsBytes, _ := json.Marshal(session)
-	fmt.Println("json", jsonAsBytes)
-	err = stub.PutState("savesession", jsonAsBytes) //rewrite allusers
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("- end save session")
-	return nil, nil
-}
-func (t *SimpleChaincode) SetUserForSession(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var token string
-	var err error
-	fmt.Println("running write()")
-
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2.")
-	}
-	token = args[0]
-
-	UserAsBytes, err := stub.GetState("savesession")
-	if err != nil {
-		return nil, errors.New("failed to get sessions")
-	}
-	var session Session
-	json.Unmarshal(UserAsBytes, &session)
-	for i := 0; i < len(session.StoreSession); i++ {
-		if session.StoreSession[i].Token == token {
-
-			return []byte(session.StoreSession[i].Email), nil
+	
+		if len(args) != 4 {
+			return nil, errors.New("Incorrect number of arguments. Expecting 4")
 		}
-	}
-	return nil, nil
-}
 
-func (t *SimpleChaincode) CreateCampaign(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var err error
-
-	if len(args) != 8 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
-	}
-
-	//input sanitation
-	fmt.Println("- start registration")
-	if len(args[0]) <= 0 {
-		return nil, errors.New("1st argument must be a non-empty string")
-	}
-	if len(args[1]) <= 0 {
-		return nil, errors.New("2nd argument must be a non-empty string")
-	}
-	if len(args[2]) <= 0 {
-		return nil, errors.New("3rd argument must be a non-empty string")
-	}
-	if len(args[3]) <= 0 {
-		return nil, errors.New("4th argument must be a non-empty string")
-	}
-	if len(args[4]) <= 0 {
-		return nil, errors.New("5th argument must be a non-empty string")
-	}
-	if len(args[5]) <= 0 {
-		return nil, errors.New("6th argument must be a non-empty string")
-	}
-	if len(args[6]) <= 0 {
-		return nil, errors.New("7th argument must be a non-empty string")
-	}
-	if len(args[7]) <= 0 {
-		return nil, errors.New("7th argument must be a non-empty string")
-	}
-	cuser := CreateCampaign{}
-	cuser.Status = args[0]
-	cuser.Id, err = strconv.Atoi(args[1])
-	if err != nil {
-		return nil, errors.New("Failed to get loanamount as cannot convert it to int")
-	}
-	cuser.UserId = args[2]
-
-	cuser.Title = args[3]
-	cuser.Description = args[4]
-	cuser.LoanAmount, err = strconv.Atoi(args[5])
-	if err != nil {
-		return nil, errors.New("Failed to get loanamount as cannot convert it to int")
-	}
-	cuser.Interest, err = strconv.ParseFloat(args[6], 32)
-	if err != nil {
-		return nil, errors.New("Failed to get interest as cannot convert it to int")
-	}
-	cuser.NoOfTerms, err = strconv.Atoi(args[7])
-	if err != nil {
-		return nil, errors.New("Failed to get NoOfTerms as cannot convert it to int")
-	}
-
-	fmt.Println("cuser", cuser)
-
-	UserAsBytes, err := stub.GetState("getcusers")
-	if err != nil {
-		return nil, errors.New("Failed to get users")
-	}
-	var campaignlist CampaignList
-	json.Unmarshal(UserAsBytes, &campaignlist) //un stringify it aka JSON.parse()
-
-	campaignlist.Campaignlist = append(campaignlist.Campaignlist, cuser)
-	fmt.Println("campaignallusers", campaignlist.Campaignlist) //append to allusers
-	fmt.Println("! appended cuser to campaignallusers")
-	jsonAsBytes, _ := json.Marshal(campaignlist)
-	fmt.Println("json", jsonAsBytes)
-	err = stub.PutState("getcusers", jsonAsBytes) //rewrite allusers
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("- end campaignlist")
-	return nil, nil
-}
-
-func (t *SimpleChaincode) PostBid(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var err error
-
-	if len(args) != 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
-	}
-
-	//input sanitation
-	fmt.Println("- start registration")
-	if len(args[0]) <= 0 {
-		return nil, errors.New("1st argument must be a non-empty string")
-	}
-	if len(args[1]) <= 0 {
-		return nil, errors.New("2nd argument must be a non-empty string")
-	}
-	if len(args[2]) <= 0 {
-		return nil, errors.New("3rd argument must be a non-empty string")
-	}
-	if len(args[3]) <= 0 {
-		return nil, errors.New("4th argument must be a non-empty string")
-	}
-
-	bid := BidInfo{}
-	bid.Id, err = strconv.Atoi(args[0])
+		//input sanitation
+		fmt.Println("- start NotifyClaim")
+		if len(args[0]) <= 0 {
+			return nil, errors.New("1st argument must be a non-empty string")
+		}
+		if len(args[1]) <= 0 {
+			return nil, errors.New("2nd argument must be a non-empty string")
+		}
+		if len(args[2]) <= 0 {
+			return nil, errors.New("3rd argument must be a non-empty string")
+		}
+		if len(args[3]) <= 0 {
+			return nil, errors.New("4th argument must be a non-empty string")
+		}
+		
+	
+	claim:=Claim{}
+	claim.Id, err = strconv.Atoi(args[0])
 	if err != nil {
 		return nil, errors.New("Failed to get id as cannot convert it to int")
 	}
-	bid.BidCreationTime = makeTimestamp()
-	bid.CampaignId, err = strconv.Atoi(args[1])
+
+	claim.ClaimNo, err = strconv.Atoi(args[1])
 	if err != nil {
-		return nil, errors.New("Failed to get CampaignId as cannot convert it to int")
+		return nil, errors.New("Failed to get ClaimNo as cannot convert it to int")
 	}
-	bid.UserId = args[2]
-	bid.Quote, err = strconv.ParseFloat(args[3], 32)
+	
+	claim.Title = args[2]
+	claim.DamageDetails=args[3]
+    claim.Status="Notify"
+	
+	fmt.Println("claim",claim)
+//get claims empty[]
+UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
-		return nil, errors.New("Failed to get Qoute as cannot convert it to int")
+		return nil, errors.New("Failed to get claims")
 	}
-
-	fmt.Println("bid", bid)
-
-	UserAsBytes, err := stub.GetState("getcusers")
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)										//un stringify it aka JSON.parse()
+	
+	claimlist.Claimlist = append(claimlist.Claimlist,claim);	
+	fmt.Println("campaignallusers",claimlist.Claimlist)					//append each claim to claimlist[]
+	fmt.Println("! appended cuser to campaignallusers")
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								//rewrite claimlist[]
 	if err != nil {
-		return nil, errors.New("Failed to get users")
+		return nil, err
 	}
-
-	var campaignlist CampaignList
-	json.Unmarshal(UserAsBytes, &campaignlist)
-
-	for i := 0; i < len(campaignlist.Campaignlist); i++ {
-
-		if campaignlist.Campaignlist[i].Id == bid.CampaignId {
-			if campaignlist.Campaignlist[0].Bidlist == nil {
-				campaignlist.Campaignlist[i].Bidlist = append(campaignlist.Campaignlist[i].Bidlist, bid)
-				campaignlist.Campaignlist[i].LowestBid = bid
-			} else if campaignlist.Campaignlist[i].LowestBid.Quote > bid.Quote {
-				campaignlist.Campaignlist[i].Bidlist = append(campaignlist.Campaignlist[i].Bidlist, bid)
-				campaignlist.Campaignlist[i].LowestBid = bid
-
-			}
-
-			jsonAsBytes, _ := json.Marshal(campaignlist)
-			fmt.Println("json", jsonAsBytes)
-			err = stub.PutState("getcusers", jsonAsBytes) //rewrite allusers
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	fmt.Println("- end postbid")
-	return nil, nil
-} //un stringify it aka JSON.parse()
-
-func (t *SimpleChaincode) UpdatePayment(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("- end claimlist")
+return nil, nil
+}
+//application of claim from insuured takes place after notification
+func (t *SimpleChaincode) createClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 
-	if len(args) != 3 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
+	
+		if len(args) != 4 {
+			return nil, errors.New("Incorrect number of arguments. Expecting 4")
+		}
+
+		//input sanitation
+		fmt.Println("- start createClaim")
+		if len(args[0]) <= 0 {
+			return nil, errors.New("1st argument must be a non-empty string")
+		}
+		if len(args[1]) <= 0 {
+			return nil, errors.New("2nd argument must be a non-empty string")
+		}
+		if len(args[2]) <= 0 {
+			return nil, errors.New("1st argument must be a non-empty string")
+		}
+		if len(args[3]) <= 0 {
+			return nil, errors.New("1st argument must be a non-empty string")
+		}
+		
+		
+	
+	
+	
+	
+	ClaimId,err  := strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+	}
+	TotalDamageValue,err := strconv.Atoi(args[1])
+	if err != nil {
+		return nil, errors.New("Failed to get TotalDamageValue as cannot convert it to int")
+	}
+	TotalClaimValue,err := strconv.Atoi(args[2])
+	if err != nil {
+		return nil, errors.New("Failed to get TotalClaimValue as cannot convert it to int")
+	}
+    Status:="approved"
+	PublicAdjusterId,err:=strconv.Atoi(args[3])
+	if err != nil {
+		return nil, errors.New("Failed to get PublicAdjusterId as cannot convert it to int")
+	}
+	
+UserAsBytes, err := stub.GetState("getclaims")
+	if err != nil {
+		return nil, errors.New("Failed to get claims")
+	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	  
+	
+		for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
+
+claimlist.Claimlist[i].TotalDamageValue = TotalDamageValue
+claimlist.Claimlist[i].TotalClaimValue = TotalClaimValue
+	
+claimlist.Claimlist[i].Status=Status
+claimlist.Claimlist[i].PublicAdjusterId=PublicAdjusterId
+}
+	
+	
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+	fmt.Println("- end claimlist")
+return nil, nil
+}
+
+//upload documents of insured in form of hash takes place			
+
+func (t *SimpleChaincode) UploadDocuments(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+
+	
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
 	//input sanitation
@@ -598,46 +414,277 @@ func (t *SimpleChaincode) UpdatePayment(stub shim.ChaincodeStubInterface, args [
 	if len(args[2]) <= 0 {
 		return nil, errors.New("3rd argument must be a non-empty string")
 	}
+	if len(args[3]) <= 0 {
+		return nil, errors.New("4th argument must be a non-empty string")
+	}
 
-	CampaignId, err := strconv.Atoi(args[0])
+	
+	document:=Document{}
+	
+	document.ClaimId,err  = strconv.Atoi(args[0])
 	if err != nil {
-		return nil, errors.New("Failed to get CampaignId as cannot convert it to int")
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
 	}
+	document.FIRCopy = args[1]
+	
+    document.Photos=args[2]
+	document.Certificates=args[3]
 
-	UserId := args[1]
+	
+	fmt.Println("document",document)
 
-	TransactionId := args[2]
-	fmt.Println("TransactionId", TransactionId)
-	UserAsBytes, err := stub.GetState("getcusers")
+UserAsBytes, err := stub.GetState("getclaims")
 	if err != nil {
-		return nil, errors.New("Failed to get users")
+		return nil, errors.New("Failed to get claims")
 	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	
+	
+		for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==document.ClaimId){
 
-	var campaignlist CampaignList
-	json.Unmarshal(UserAsBytes, &campaignlist)
+claimlist.Claimlist[i].Documents = append(claimlist.Claimlist[i].Documents,document);
 
-	for i := 0; i < len(campaignlist.Campaignlist); i++ {
-		if campaignlist.Campaignlist[i].Id == CampaignId && campaignlist.Campaignlist[i].LowestBid.UserId == UserId {
-			if campaignlist.Campaignlist[i].NotermsRemaining == 0 {
-				campaignlist.Campaignlist[i].NotermsRemaining = campaignlist.Campaignlist[i].NoOfTerms
-			} else {
-				campaignlist.Campaignlist[i].NotermsRemaining = campaignlist.Campaignlist[i].NotermsRemaining - 1
-
-			}
-
-			jsonAsBytes, _ := json.Marshal(campaignlist)
-			fmt.Println("json", jsonAsBytes)
-			err = stub.PutState("getcusers", jsonAsBytes) //rewrite allusers
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	fmt.Println("- end updatepayment")
-	return nil, nil
-} //un stringify it aka JSON.parse()
-
-func makeTimestamp() int64 {
-	return time.Now().UnixNano() / (int64(time.Millisecond) / int64(time.Nanosecond))
 }
+	
+	
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+		
+fmt.Println("- end uploaddocumen")
+return nil, nil
+	}
+//examination of claim takes place from examiner
+func (t *SimpleChaincode) ExamineClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+
+	
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
+	}
+
+	//input sanitation
+	fmt.Println("- start ExamineClaim")
+	if len(args[0]) <= 0 {
+		return nil, errors.New("1st argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return nil, errors.New("2nd argument must be a non-empty string")
+	}
+	if len(args[2]) <= 0 {
+		return nil, errors.New("3rd argument must be a non-empty string")
+	}
+	if len(args[3]) <= 0 {
+		return nil, errors.New("3rd argument must be a non-empty string")
+	}
+	
+	
+	examine:=ExaminedUpdate{}
+	examine.Id,err = strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get id as cannot convert it to int")
+	}
+	examine.ClaimId,err  = strconv.Atoi(args[1])
+	if err != nil {
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+	}
+	examine.AssessedDamageValue,err = strconv.Atoi(args[2])
+	if err != nil {
+		return nil, errors.New("Failed to get AssessedDamageValue as cannot convert it to int")
+	}
+	examine.AssessedClaimValue,err = strconv.Atoi(args[3])
+	if err != nil {
+		return nil, errors.New("Failed to get AssessedClaimValue as cannot convert it to int")
+	}
+    Status:="Examined"
+	
+
+	
+	fmt.Println("examine",examine)
+
+UserAsBytes, err := stub.GetState("getclaims")
+	if err != nil {
+		return nil, errors.New("Failed to get claims")
+	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	
+	
+		for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==examine.ClaimId){
+
+claimlist.Claimlist[i].AssessedDamageValue = examine.AssessedDamageValue
+claimlist.Claimlist[i].AssessedClaimValue = examine.AssessedClaimValue
+claimlist.Claimlist[i].Status=Status
+claimlist.Claimlist[i].ExaminerId=examine.Id
+}
+	
+	
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+		
+fmt.Println("- end ExaminedDocument")
+return nil, nil 
+	}
+//claim negotiation between public adjuster and claim adjuster takes place
+func (t *SimpleChaincode) ClaimNegotiation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+
+	
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
+	}
+
+	//input sanitation
+	fmt.Println("- start ClaimNegotiation")
+	if len(args[0]) <= 0 {
+		return nil, errors.New("1st argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return nil, errors.New("2nd argument must be a non-empty string")
+	}
+	if len(args[2]) <= 0 {
+		return nil, errors.New("3rd argument must be a non-empty string")
+	}
+	if len(args[3]) <= 0 {
+		return nil, errors.New("3rd argument must be a non-empty string")
+	}
+	
+	
+	
+	negotiation:=Negotiation{}
+	negotiation.Id,err = strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get id as cannot convert it to int")
+	}
+	ClaimId,err  := strconv.Atoi(args[1])
+	if err != nil {
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+	}
+	negotiation.Negotiations,err = strconv.Atoi(args[2])
+	if err != nil {
+		return nil, errors.New("Failed to get Negotiations as cannot convert it to int")
+	}
+	negotiation.AsPerTerm2B=args[3]
+
+	Status:="Validated"
+	
+
+	
+	fmt.Println("negotiation",negotiation)
+
+UserAsBytes, err := stub.GetState("getclaims")
+	if err != nil {
+		return nil, errors.New("Failed to get claims")
+	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	
+	
+		for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
+		if(claimlist.Claimlist[0].Negotiationvalue== nil){
+claimlist.Claimlist[i].Status=Status
+claimlist.Claimlist[i].ClaimAdjusterId=negotiation.Id
+claimlist.Claimlist[i].Negotiationvalue = append(claimlist.Claimlist[i].Negotiationvalue,negotiation);
+
+}else {
+claimlist.Claimlist[i].Status=Status
+claimlist.Claimlist[i].Negotiationvalue = append(claimlist.Claimlist[i].Negotiationvalue,negotiation);
+
+}
+	}
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+		
+fmt.Println("- end Negotiation")
+return nil, nil 
+	}
+//after negotiation claim amount will be finalised and approved
+func (t *SimpleChaincode) approveClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+
+	
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+
+	//input sanitation
+	fmt.Println("- start ClaimNegotiation")
+	if len(args[0]) <= 0 {
+		return nil, errors.New("1st argument must be a non-empty string")
+	}
+	
+	
+	
+	
+	
+	ClaimId,err  := strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get ClaimId as cannot convert it to int")
+	}
+	
+
+	Status:="ClaimFinalised"
+	
+
+	
+	
+UserAsBytes, err := stub.GetState("getclaims")
+	if err != nil {
+		return nil, errors.New("Failed to get claims")
+	}
+	
+	var claimlist ClaimList
+	json.Unmarshal(UserAsBytes, &claimlist)	//un stringify it aka JSON.parse()
+	
+	
+		for i:=0;i<len(claimlist.Claimlist);i++{
+		
+		
+	if(claimlist.Claimlist[i].ClaimNo==ClaimId){
+		if(claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-1)].Negotiations==claimlist.Claimlist[i].Negotiationvalue[(len(claimlist.Claimlist[i].Negotiationvalue)-2)].Negotiations ){
+                 claimlist.Claimlist[i].Status=Status
+              lastindex := (len(claimlist.Claimlist[i].Negotiationvalue) - 1)
+                lastnegotiation := claimlist.Claimlist[i].Negotiationvalue[lastindex]
+                claimlist.Claimlist[i].ApprovedClaim = lastnegotiation.Negotiations
+
+
+}
+	}
+	jsonAsBytes, _ := json.Marshal(claimlist)
+	fmt.Println("json",jsonAsBytes)
+	err = stub.PutState("getclaims", jsonAsBytes)								
+	if err != nil {
+		return nil, err
+	}
+	}
+		
+fmt.Println("- end approve claim")
+return nil, nil 
+	}

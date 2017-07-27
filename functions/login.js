@@ -1,70 +1,64 @@
 'use strict';
 
-//const user = require('../blockchai');
-var user= "risabh_login";
-var bcSdk = require('../src/blockchain/blockchain_sdk.js');
+const user = require('../models/user');
+
+exports.loginUser = (email, password) =>
+
+    new Promise((resolve, reject) => {
 
 
-exports.loginUser = (email1, passpin) => 
 
-	new Promise((resolve,reject) => {
-		const ui_login =({
+        user.find({
+                "email": email
+            })
+            .then(users => {
 
-			email: email1,
-			passpin: passpin
+                const dbpin = users[0].password;
+                console.log(users[0].password)
+                console.log(users[0]._id)
+                console.log(dbpin + "   " + users[0].password)
 
-			
-		});
-		console.log("ENTERING THE login MODULE");
-            return bcSdk.User_login({ ui_login})
+                if (String(password) === String(dbpin)) {
 
-			.then(() => resolve({ status: 201, message: 'User signed in Sucessfully !',token:token }))
+                    resolve({
+                        status: 200,
+                        message: email,
+                        users: users[0]
+                    });
 
-			.catch(err => {
+                } else {
 
-			if (err.code == 11000) {
-						
-				reject({ status: 409, message: 'User Already Registered !' });
+                    reject({
+                        status: 401,
+                        message: 'Invalid Credentials !'
+                    });
+                }
+            })
 
-			} else {
-				conslole.log("error occurred" + err);
 
-	}
-					})
-	});
 
-	/*	user.find({email: email})
 
-		.then(users => {
+            .then(users => {
+                console.log(users)
+                if (users.length == 0) {
 
-			if (email.length == 0) {
+                    reject({
+                        status: 404,
+                        message: 'User Not Found !'
+                    });
 
-				reject({ status: 404, message: 'User Not Found !' });
+                } else {
 
-			} else {
+                    return users[0];
 
-				return users[0];
-				
-			}
-		})
+                }
+            })
 
-		.then(user => {
 
-			const hashed_password = user.hashed_password;
+            .catch(err => reject({
+                status: 403,
+                message: 'email id not registered'
+            }));
 
-			if (bcrypt.compareSync(password, hashed_password)) {
 
-				resolve({ status: 200, message: email });
-
-			} else {
-
-				reject({ status: 401, message: 'Invalid Credentials !' });
-			}
-		})
-
-		.catch(err => reject({ status: 500, message: 'Internal Server Error !' }));
-
-	});
-*/
-
-	
+    });
