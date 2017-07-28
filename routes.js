@@ -24,6 +24,7 @@ const config = require('./config/config.json');
 
 const notifyClaim = require('./functions/notifyClaim');
 const createClaim = require('./functions/createClaim');
+const rejectClaim = require('./functions/rejectClaim');
 const examineClaim = require('./functions/examineClaim');
 const negotiateClaim = require('./functions/negotiateClaim');
 const approveClaim = require('./functions/approveClaim');
@@ -490,6 +491,41 @@ module.exports = router => {
         }
     });
 
+    router.post('/rejectClaim', cors(), (req, res) => {
+        const userid = getUserId(req)
+        const claim_no = req.body.claimno;
+
+
+
+
+        if (!claim_no || !userid || !claim_no.trim() || !userid.trim()) {
+            //the if statement checks if any of the above paramenters are null or not..if is the it sends an error report.
+            res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        } else {
+
+
+            rejectClaim.rejectClaim(claim_no)
+                .then(result => {
+
+
+                    res.status(result.status).json({
+                        status: result.status,
+                        message: result.message
+                    })
+                })
+
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
+        }
+
+    });
+
+
+
 
     router.post('/examineClaim', cors(), (req, res) => {
         const examinerid = getUserId(req)
@@ -531,7 +567,7 @@ module.exports = router => {
 
 
     router.post('/negotiateClaim', cors(), (req, res) => {
-        const claimadjusterid = getUserId(req)
+        const id = getUserId(req)
 
 
 
@@ -542,7 +578,7 @@ module.exports = router => {
 
 
 
-        if (!claim_no || !negotiationamount || !asperterm2B || !claimadjusterid || !claim_no.trim() || !negotiationamount.trim() || !asperterm2B.trim() || !claimadjusterid.trim()) {
+        if (!claim_no || !negotiationamount || !asperterm2B || !id || !claim_no.trim() || !negotiationamount.trim() || !asperterm2B.trim() || !id.trim()) {
             //the if statement checks if any of the above paramenters are null or not..if is the it sends an error report.
             res.status(400).json({
                 message: 'Invalid Request !'
@@ -551,7 +587,7 @@ module.exports = router => {
         } else {
 
 
-            negotiateClaim.negotiateClaim(claim_no, negotiationamount, asperterm2B, claimadjusterid)
+            negotiateClaim.negotiateClaim(claim_no, negotiationamount, asperterm2B, id)
                 .then(result => {
 
 

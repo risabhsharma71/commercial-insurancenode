@@ -169,6 +169,75 @@ function createClaim(params) {
     });
 }
 
+function rejectClaim(params) {
+
+    console.log("calling SDK for reject claim");
+    return new Promise(function(resolve, reject) {
+        var ClaimDetails;
+        try {
+            logHelper.logEntryAndInput(logger, 'rejectClaim', params);
+
+            if (!validate.isValidJson(params)) {
+                logHelper.logError(logger, 'rejectClaim', 'Invalid params');
+                return reject({
+                    statusCode: constants.INVALID_INPUT,
+                    body: 'Could not settle claim. Invalid params'
+                })
+            }
+
+            var user = params.user;
+            if (!validate.isValidString(user)) {
+                logHelper.logError(logger, 'rejectClaim', 'Invalid user');
+                return reject({
+                    statusCode: constants.INVALID_INPUT,
+                    body: 'Could not reject claim. Invalid user'
+                })
+            }
+
+            ClaimDetails = params.claim_details;
+
+            if (!validate.isValidJson(ClaimDetails)) {
+                logHelper.logError(logger, 'rejectClaim', 'Invalid ClaimDetails');
+                return reject({
+                    statusCode: constants.INVALID_INPUT,
+                    body: 'Could not settle claim. Invalid json object'
+                })
+            }
+            var reqSpec = getRequestSpec({
+                functionName: "rejectClaim",
+                args: [ClaimDetails.claim_no]
+            });
+            recursiveInvoke({
+                    requestSpec: reqSpec,
+                    user: user
+                })
+                .then(function(resp) {
+                    logHelper.logMessage(logger, 'rejectClaim', 'reject claim', resp.body);
+                    return resolve({
+                        statusCode: constants.SUCCESS,
+                        body: ClaimDetails
+                    });
+                })
+                .catch(function(err) {
+                    logHelper.logError(logger, 'rejectClaim', 'Could not reject claim', err);
+                    return reject({
+                        statusCode: constants.INTERNAL_SERVER_ERROR,
+                        body: 'Could not reject claim'
+                    });
+
+                });
+
+        } catch (err) {
+            logHelper.logError(logger, 'UserRegisteration', 'Could not register user application on blockchain ledger: ', err);
+            return reject({
+                statusCode: constants.INTERNAL_SERVER_ERROR,
+                body: 'Could not register user'
+            });
+        }
+    });
+}
+
+
 
 function examineClaim(params) {
 
@@ -275,7 +344,7 @@ function negotiateClaim(params) {
             }
             var reqSpec = getRequestSpec({
                 functionName: "ClaimNegotiation",
-                args: [ClaimDetails.claimadjusterid, ClaimDetails.claim_no, ClaimDetails.negotiationamount, ClaimDetails.asperterm2B]
+                args: [ClaimDetails.id, ClaimDetails.claim_no, ClaimDetails.negotiationamount, ClaimDetails.asperterm2B]
             });
             recursiveInvoke({
                     requestSpec: reqSpec,
@@ -312,13 +381,7 @@ function approveClaim(params) {
 
     console.log("calling SDK for approve claim");
 
-    console.log("calling SDK for approve claim");
-
-    console.log("calling SDK for approve claim");
-
-    console.log("calling SDK for approve claim");
-
-    console.log("calling SDK for approve claim");
+   
     return new Promise(function(resolve, reject) {
         var ClaimDetails;
         try {
@@ -1065,6 +1128,7 @@ module.exports = {
 
     notify_Claim: notify_Claim,
     createClaim: createClaim,
+    rejectClaim: rejectClaim,
     examineClaim: examineClaim,
     negotiateClaim: negotiateClaim,
     approveClaim: approveClaim,
