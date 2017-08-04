@@ -37,88 +37,8 @@ const fetchClaimlist = require('./functions/fetchClaimlist');
 module.exports = router => {
 
     router.get('/', (req, res) => res.end('Welcome to p2plending,please hit a service !'));
-    router.post('/login', cors(), (req, res) => {
-
-        const email = req.body.email;
-
-        const password = req.body.password;
-        const policyno = req.body.policyno;
-        if (!email || !password || !email.trim()) {
-
-            res.status(400).json({
-                message: 'Invalid Request !'
-            });
-
-        } else {
-
-            login.loginUser(email, password)
-
-                .then(result => {
-                    if ('liscenceid' in result.users._doc) {
-
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "publicadjuster"
-                        });
-
-                    } else if ('examinerid' in result.users._doc) {
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "examiner"
-                        });
-                    } else if ('claimadjusterid' in result.users._doc) {
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "claimadjuster"
-                        });
-                    } else {
-                        const token = jwt.sign(result, config.secret, {
-                            expiresIn: 144000000
-                        });
-                        res.status(result.status).json({
-                            message: result.message,
-                            token: token,
-                            usertype: "insured"
-                        });
-                    }
-
-
-                })
-
-
-
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
-        }
-    });
-
-
-    router.post('/testmethod', cors(), function(req, res) {
-        const id = checkToken(req)
-        console.log(id)
-        res.send({
-            "name": "risabh",
-            "email": "rls@gmail.com"
-        });
-    });
-
-    console.log("entering register function in functions");
-
     router.post('/registerUser', cors(), (req, res) => {
-
+        console.log("entering register function in functions");
         const firstname = req.body.firstname;
         console.log(firstname);
         const lastname = req.body.lastname;
@@ -140,18 +60,18 @@ module.exports = router => {
 
             register.registerUser(firstname, lastname, email, phone, password)
 
-                .then(result => {
+            .then(result => {
 
-                    res.setHeader('Location', '/users/' + email);
-                    res.status(result.status).json({
-                        message: result.message,
-                        ind: true
-                    })
+                res.setHeader('Location', '/users/' + email);
+                res.status(result.status).json({
+                    message: result.message,
+                    ind: true
                 })
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
 
@@ -179,20 +99,100 @@ module.exports = router => {
 
             registerpublicadjuster.registerPublicAdjuster(liscenceid, firstname, lastname, email, phone, password)
 
-                .then(result => {
+            .then(result => {
 
-                    res.setHeader('Location', '/users/' + email);
-                    res.status(result.status).json({
-                        message: result.message,
-                        ind: true
-                    })
+                res.setHeader('Location', '/users/' + email);
+                res.status(result.status).json({
+                    message: result.message,
+                    ind: true
                 })
+            })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
+
+    router.post('/login', cors(), (req, res) => {
+
+        const email = req.body.email;
+
+        const password = req.body.password;
+        const policyno = req.body.policyno;
+        if (!email || !password || !email.trim()) {
+
+            res.status(400).json({
+                message: 'Invalid Request !'
+            });
+
+        } else {
+
+            login.loginUser(email, password)
+
+            .then(result => {
+                if ('liscenceid' in result.users._doc) {
+
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "publicadjuster"
+                    });
+
+                } else if ('examinerid' in result.users._doc) {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "examiner"
+                    });
+                } else if ('claimadjusterid' in result.users._doc) {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "claimadjuster"
+                    });
+                } else {
+                    const token = jwt.sign(result, config.secret, {
+                        expiresIn: 144000000
+                    });
+                    res.status(result.status).json({
+                        message: result.message,
+                        token: token,
+                        usertype: "insured"
+                    });
+                }
+
+
+            })
+
+
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+        }
+    });
+
+
+    router.post('/testmethod', cors(), function(req, res) {
+        const id = checkToken(req)
+        console.log(id)
+        res.send({
+            "name": "risabh",
+            "email": "rls@gmail.com"
+        });
+    });
+
+
 
 
     router.get('/users/:id', cors(), (req, res) => {
@@ -201,11 +201,11 @@ module.exports = router => {
 
             profile.getProfile(req.params.id)
 
-                .then(result => res.json(result))
+            .then(result => res.json(result))
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -232,13 +232,13 @@ module.exports = router => {
 
                 password.changePassword(req.params.id, oldPassword, newPassword)
 
-                    .then(result => res.status(result.status).json({
-                        message: result.message
-                    }))
+                .then(result => res.status(result.status).json({
+                    message: result.message
+                }))
 
-                    .catch(err => res.status(err.status).json({
-                        message: err.message
-                    }));
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
 
             }
         } else {
@@ -259,25 +259,25 @@ module.exports = router => {
 
             password.resetPasswordInit(email)
 
-                .then(result => res.status(result.status).json({
-                    message: result.message
-                }))
+            .then(result => res.status(result.status).json({
+                message: result.message
+            }))
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
             password.resetPasswordFinish(email, token, newPassword)
 
-                .then(result => res.status(result.status).json({
-                    message: result.message
-                }))
+            .then(result => res.status(result.status).json({
+                message: result.message
+            }))
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
 
@@ -314,9 +314,9 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
     });
 
@@ -329,51 +329,52 @@ module.exports = router => {
         if (checkToken(req)) {
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
-                .then(function(result) {
-                    var daysDifference = [];
-                    var claimDifference = [];
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                        if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+            .then(function(result) {
+                var daysDifference = [];
+                var claimDifference = [];
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
 
-                            var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
-                            console.log("date1" + date1);
-                            var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
-                            console.log("date1" + date2);
-                            var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                            console.log("diffDays" + diffDays);
-                            daysDifference.push(diffDays)
-                            console.log("daysDifference" + daysDifference);
-                            var total = 0;
-                            for (let i = 0; i < daysDifference.length; i++) {
-                                total += daysDifference[i];
-                            }
-                            var averagedays = total / daysDifference.length;
-                            var longest = Math.max.apply(null, daysDifference)
-                            var shortest = Math.min.apply(null, daysDifference)
+                    if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
 
-
-
-
+                        var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
+                        console.log("date1" + date1);
+                        var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
+                        console.log("date1" + date2);
+                        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                        console.log("diffDays" + diffDays);
+                        daysDifference.push(diffDays)
+                        console.log("daysDifference" + daysDifference);
+                        var total = 0;
+                        for (let i = 0; i < daysDifference.length; i++) {
+                            total += daysDifference[i];
                         }
-                    }
-                    res.json({
-                        message: "user claims found",
-                        allClaims: result,
-                        Average: averagedays,
-                        Longest: longest,
-                        Shortest: shortest
-                    });
-                    //res.json(result)
-                })
+                        var averagedays = total / daysDifference.length;
+                        var longest = Math.max.apply(null, daysDifference)
+                        var shortest = Math.min.apply(null, daysDifference)
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+
+
+                    }
+
+                }
+                res.json({
+                    message: "user claims found",
+                    allClaims: result,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+                });
+                //res.json(result)
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
 
         } else {
 
@@ -382,71 +383,6 @@ module.exports = router => {
             });
         }
     });
-
-
-
-    router.get('/claim/UserClaims', (req, res) => {
-
-        const id = getUserId(req)
-
-        console.log("id" + id);
-        if (1 == 1) {
-
-
-            fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
-
-                .then(function(result) {
-                    console.log("result array data" + result.claimlist.body.claimlist);
-
-                    var filteredclaims = [];
-                    var status = [];
-                    console.log("length of result array" + result.claimlist.body.claimlist.length);
-
-                    for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
-                        console.log("id" + id);
-                        console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                        if (result.claimlist.body.claimlist[i].userid === id) {
-                            console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                            filteredclaims.push(result.claimlist.body.claimlist[i]);
-                            status.push(result.claimlist.body.claimlist[i].status);
-                            var countstatus = count(status);
-                            console.log("countstatus" + countstatus[0][0]);
-
-                            console.log("filteredclaims array " + filteredclaims);
-
-
-
-                        } else if (result.claimlist.body.claimlist[i].userid !== id) {
-
-                            return res.json({
-                                status: 409,
-                                message: 'claim not found'
-                            });
-                        }
-                    }
-                    return res.json({
-                        message: "user claims found",
-                        userClaims: filteredclaims,
-                        statuscount: countstatus
-                    });
-                })
-
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
-
-        } else {
-
-            return res.status(401).json({
-                message: 'cant fetch data !'
-            });
-        }
-    });
-
-
     router.post('/createClaim', cors(), (req, res) => {
         if (checkToken(req)) {
 
@@ -479,9 +415,9 @@ module.exports = router => {
                         })
                     })
 
-                    .catch(err => res.status(err.status).json({
-                        message: err.message
-                    }));
+                .catch(err => res.status(err.status).json({
+                    message: err.message
+                }));
             }
         } else {
 
@@ -494,11 +430,11 @@ module.exports = router => {
     router.post('/rejectClaim', cors(), (req, res) => {
         const userid = getUserId(req)
         const claim_no = req.body.claimno;
+        const remarks = req.body.remarks;
 
 
 
-
-        if (!claim_no || !userid || !claim_no.trim() || !userid.trim()) {
+        if (!claim_no || !userid || !remarks || !claim_no.trim() || !userid.trim() || !remarks.trim()) {
             //the if statement checks if any of the above paramenters are null or not..if is the it sends an error report.
             res.status(400).json({
                 message: 'Invalid Request !'
@@ -507,7 +443,7 @@ module.exports = router => {
         } else {
 
 
-            rejectClaim.rejectClaim(claim_no)
+            rejectClaim.rejectClaim(claim_no, remarks)
                 .then(result => {
 
 
@@ -517,9 +453,9 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
@@ -558,9 +494,9 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
@@ -597,9 +533,9 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
@@ -631,9 +567,9 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
@@ -652,13 +588,13 @@ module.exports = router => {
 
 
             fetchClaimlist.fetch_Claim_list({
-                    "user": "risabh",
-                    "getclaims": "getclaims"
-                })
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
 
 
 
-                .then(function(result1) {
+            .then(function(result1) {
 
 
 
@@ -721,14 +657,367 @@ module.exports = router => {
                     })
                 })
 
-                .catch(err => res.status(err.status).json({
-                    message: err.message
-                }));
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
         }
 
     });
 
+    router.get('/claim/UserClaims', (req, res) => {
 
+        const id = getUserId(req)
+
+        console.log("id" + id);
+        if (1 == 1) {
+
+
+            fetchClaimlist.fetch_Claim_list({
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
+
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
+
+                var filteredclaims = [];
+                var status = [];
+                var daysDifference = [];
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
+
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (result.claimlist.body.claimlist[i].userid === id) {
+                        console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                        filteredclaims.push(result.claimlist.body.claimlist[i]);
+                        status.push(result.claimlist.body.claimlist[i].status);
+                        var countstatus = count(status);
+                        console.log("countstatus" + countstatus);
+                        console.log("filteredclaims array " + filteredclaims);
+                        if (result.claimlist.body.claimlist[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+
+                            var date1 = new Date(result.claimlist.body.claimlist[i].claimnotifieddate);
+                            console.log("date1" + date1);
+                            var date2 = new Date(result.claimlist.body.claimlist[i].claimsettleddate);
+                            console.log("date1" + date2);
+                            var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                            console.log("diffDays" + diffDays);
+                            daysDifference.push(diffDays)
+                            console.log("daysDifference" + daysDifference);
+                            var total = 0;
+                            for (let i = 0; i < daysDifference.length; i++) {
+                                total += daysDifference[i];
+                            }
+                            var averagedays = total / daysDifference.length;
+                            var longest = Math.max.apply(null, daysDifference)
+                            var shortest = Math.min.apply(null, daysDifference)
+
+
+
+                        }
+
+
+                    }
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+                });
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+
+        } else {
+
+            return res.status(401).json({
+                message: 'cant fetch data !'
+            });
+        }
+    });
+
+
+
+    router.get('/claim/ExaminerClaims', (req, res) => {
+
+        const id = getUserId(req)
+
+        console.log("id" + id);
+        if (1 == 1) {
+
+
+            fetchClaimlist.fetch_Claim_list({
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
+
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
+
+                var filteredclaims = [];
+
+                var status = [];
+                var daysDifference = [];
+                var countstatus
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
+
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (id === id) {
+
+                        if (result.claimlist.body.claimlist[i].status == "Submitted") {
+                            filteredclaims.push(result.claimlist.body.claimlist[i]);
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+
+                            console.log("countstatus" + countstatus);
+                            console.log("filteredclaims array " + filteredclaims);
+                            for (let i = 0; i < filteredclaims.length; i++) {
+                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+
+                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                    console.log("date1" + date1);
+                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                    console.log("date1" + date2);
+                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                    console.log("diffDays" + diffDays);
+                                    daysDifference.push(diffDays)
+                                    console.log("daysDifference" + daysDifference);
+                                    var total = 0;
+                                    for (let i = 0; i < daysDifference.length; i++) {
+                                        total += daysDifference[i];
+                                    }
+                                    var averagedays = total / daysDifference.length;
+                                    var longest = Math.max.apply(null, daysDifference)
+                                    var shortest = Math.min.apply(null, daysDifference)
+
+
+
+                                }
+                            }
+
+
+                        }
+                        if (result.claimlist.body.claimlist[i].examinerid === id) {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+                        }
+                    }
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+
+                });
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+
+        } else {
+
+            return res.status(401).json({
+                message: 'cant fetch data !'
+            });
+        }
+    });
+
+
+    router.get('/claim/ClaimAdjusterClaims', (req, res) => {
+
+        const id = getUserId(req)
+
+        console.log("id" + id);
+        if (1 == 1) {
+
+
+            fetchClaimlist.fetch_Claim_list({
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
+
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
+
+                var filteredclaims = [];
+
+                var status = [];
+                var daysDifference = [];
+                var countstatus
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
+
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (id === id) {
+
+                        if (result.claimlist.body.claimlist[i].status == "Examined") {
+                            filteredclaims.push(result.claimlist.body.claimlist[i]);
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+
+                            console.log("countstatus" + countstatus);
+                            console.log("filteredclaims array " + filteredclaims);
+                            for (let i = 0; i < filteredclaims.length; i++) {
+                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+
+                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                    console.log("date1" + date1);
+                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                    console.log("date1" + date2);
+                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                    console.log("diffDays" + diffDays);
+                                    daysDifference.push(diffDays)
+                                    console.log("daysDifference" + daysDifference);
+                                    var total = 0;
+                                    for (let i = 0; i < daysDifference.length; i++) {
+                                        total += daysDifference[i];
+                                    }
+                                    var averagedays = total / daysDifference.length;
+                                    var longest = Math.max.apply(null, daysDifference)
+                                    var shortest = Math.min.apply(null, daysDifference)
+
+
+
+                                }
+                            }
+
+
+                        }
+                        if (result.claimlist.body.claimlist[i].claimadjusterid === id) {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+                        }
+                    }
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+
+                });
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+
+        } else {
+
+            return res.status(401).json({
+                message: 'cant fetch data !'
+            });
+        }
+    });
+
+    router.get('/claim/PublicAdjusterClaims', (req, res) => {
+
+        const id = getUserId(req)
+
+        console.log("id" + id);
+        if (1 == 1) {
+
+
+            fetchClaimlist.fetch_Claim_list({
+                "user": "risabh",
+                "getclaims": "getclaims"
+            })
+
+            .then(function(result) {
+                console.log("result array data" + result.claimlist.body.claimlist);
+
+                var filteredclaims = [];
+
+                var status = [];
+                var daysDifference = [];
+                var countstatus
+                console.log("length of result array" + result.claimlist.body.claimlist.length);
+
+                for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                    console.log("id" + id);
+                    console.log("userid" + result.claimlist.body.claimlist[i].userid);
+                    if (id === id) {
+
+                        if (result.claimlist.body.claimlist[i].status == "Validated") {
+                            filteredclaims.push(result.claimlist.body.claimlist[i]);
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+
+                            console.log("countstatus" + countstatus);
+                            console.log("filteredclaims array " + filteredclaims);
+                            for (let i = 0; i < filteredclaims.length; i++) {
+                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
+
+                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                    console.log("date1" + date1);
+                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                    console.log("date1" + date2);
+                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                    console.log("diffDays" + diffDays);
+                                    daysDifference.push(diffDays)
+                                    console.log("daysDifference" + daysDifference);
+                                    var total = 0;
+                                    for (let i = 0; i < daysDifference.length; i++) {
+                                        total += daysDifference[i];
+                                    }
+                                    var averagedays = total / daysDifference.length;
+                                    var longest = Math.max.apply(null, daysDifference)
+                                    var shortest = Math.min.apply(null, daysDifference)
+
+
+
+                                }
+                            }
+
+
+                        }
+                        if (result.claimlist.body.claimlist[i].publicadjusterid === id) {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+                        }
+                    }
+                }
+                return res.json({
+                    message: "user claims found",
+                    userClaims: filteredclaims,
+                    statuscount: countstatus,
+                    Average: averagedays,
+                    Longest: longest,
+                    Shortest: shortest
+
+                });
+            })
+
+            .catch(err => res.status(err.status).json({
+                message: err.message
+            }));
+
+        } else {
+
+            return res.status(401).json({
+                message: 'cant fetch data !'
+            });
+        }
+    });
 
 
     router.getImages = function(callback, limit) {
@@ -768,16 +1057,21 @@ module.exports = router => {
 
     router.post('/UploadDocs', upload.any(), function(req, res, next) {
         const id = getUserId(req)
-        res.send(req.files);
-
+        res.send({
+            "files": req.files,
+            message: "files uploaded succesfully"
+        });
 
         var path = req.files[0].path;
         var imageName = req.files[0].originalname;
+
 
         var imagepath = {};
         imagepath['path'] = path;
         imagepath['originalname'] = imageName;
         imagepath['userid'] = id
+
+
 
         router.addImage(imagepath, function(err) {
 
@@ -802,7 +1096,7 @@ module.exports = router => {
 
     router.get('/images/id', function(req, res) {
         const userid = getUserId(req)
-        //const userid = "uploads/logo.jpg"
+            //const userid = "uploads/logo.jpg"
         console.log(userid);
         router.getImageById(userid, function(err, genres) {
             if (err) {
@@ -863,21 +1157,79 @@ module.exports = router => {
 }
 
 
+function filterstatus(status) {
+
+    if (1 == 1) {
+
+
+        fetchClaimlist.fetch_Claim_list({
+            "user": "risabh",
+            "getclaims": "getclaims"
+        })
+
+        .then(function(result) {
+
+
+            console.log("result" + result.claimlist.body.claimlist)
+            var statusfilter = [];
+
+
+            for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
+                console.log("status" + status);
+                console.log("statusledger" + result.claimlist.body.claimlist[i].status);
+                if (result.claimlist.body.claimlist[i].status === status) {
+
+                    statusfilter.push(result.claimlist.body.claimlist[i].status);
+                    console.log("statusfilter" + statusfilter);
+
+
+
+
+                }
+            }
+            return statusfilter;
+        })
+
+        .catch(err => res.status(err.status).json({
+            message: err.message
+        }));
+
+    } else {
+        return res.status(401).json({
+            message: 'cant fetch data !'
+        });
+
+
+    }
+}
+
+
+
 function count(arr) {
-    var a = [],
-        b = [],
+    var statusname = [],
+        statuscount = [],
         prev;
 
     arr.sort();
     for (var i = 0; i < arr.length; i++) {
         if (arr[i] !== prev) {
-            a.push(arr[i]);
-            b.push(1);
+            statusname.push(arr[i]);
+            statuscount.push(1);
         } else {
-            b[b.length - 1]++;
+            statuscount[statuscount.length - 1]++;
         }
         prev = arr[i];
     }
+    console.log("statusname" + statusname);
+    var result = [];
+    for (var status in statusname) {
 
-    return [a, b];
+
+        result.push({
+            statusname: statusname[status],
+            statuscount: statuscount[status]
+        });
+    }
+
+    return result;
 }
