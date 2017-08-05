@@ -807,9 +807,15 @@ module.exports = router => {
 
 
                         }
+                        if (result.claimlist.body.claimlist[i].status == "Notified") {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                            countstatus = count(status);
+                        }
                         if (result.claimlist.body.claimlist[i].examinerid === id) {
                             status.push(result.claimlist.body.claimlist[i].status);
                             countstatus = count(status);
+
+
                         }
                     }
                 }
@@ -865,9 +871,19 @@ module.exports = router => {
                     console.log("userid" + result.claimlist.body.claimlist[i].userid);
                     if (id === id) {
 
-                        if (result.claimlist.body.claimlist[i].status == "Examined") {
+                        if (result.claimlist.body.claimlist[i].status == "Examined" || result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
                             filteredclaims.push(result.claimlist.body.claimlist[i]);
-                            status.push(result.claimlist.body.claimlist[i].status);
+
+                            if (result.claimlist.body.claimlist[i].status == "Examined") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Validated") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Approved") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Settled") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            }
+
                             countstatus = count(status);
 
                             console.log("countstatus" + countstatus);
@@ -899,10 +915,13 @@ module.exports = router => {
 
 
                         }
-                        if (result.claimlist.body.claimlist[i].claimadjusterid === id) {
+
+                        if (result.claimlist.body.claimlist[i].status == "Notified" || result.claimlist.body.claimlist[i].status == "Submitted") {
                             status.push(result.claimlist.body.claimlist[i].status);
                             countstatus = count(status);
                         }
+
+
                     }
                 }
                 return res.json({
@@ -947,8 +966,10 @@ module.exports = router => {
                 var filteredclaims = [];
 
                 var status = [];
+                var status1 = [];
                 var daysDifference = [];
                 var countstatus
+                var countstatus1
                 console.log("length of result array" + result.claimlist.body.claimlist.length);
 
                 for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
@@ -958,48 +979,56 @@ module.exports = router => {
 
                         if (result.claimlist.body.claimlist[i].status == "Validated") {
                             filteredclaims.push(result.claimlist.body.claimlist[i]);
+                            status1.push(result.claimlist.body.claimlist[i].status);
+                            countstatus1 = count(status1);
+                        } else if (result.claimlist.body.claimlist[i].status == "Approved") {
                             status.push(result.claimlist.body.claimlist[i].status);
-                            countstatus = count(status);
-
-                            console.log("countstatus" + countstatus);
-                            console.log("filteredclaims array " + filteredclaims);
-                            for (let i = 0; i < filteredclaims.length; i++) {
-                                if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
-
-                                    var date1 = new Date(filteredclaims[i].claimnotifieddate);
-                                    console.log("date1" + date1);
-                                    var date2 = new Date(filteredclaims[i].claimsettleddate);
-                                    console.log("date1" + date2);
-                                    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-                                    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                                    console.log("diffDays" + diffDays);
-                                    daysDifference.push(diffDays)
-                                    console.log("daysDifference" + daysDifference);
-                                    var total = 0;
-                                    for (let i = 0; i < daysDifference.length; i++) {
-                                        total += daysDifference[i];
-                                    }
-                                    var averagedays = total / daysDifference.length;
-                                    var longest = Math.max.apply(null, daysDifference)
-                                    var shortest = Math.min.apply(null, daysDifference)
+                        } else if (result.claimlist.body.claimlist[i].status == "Settled") {
+                            status.push(result.claimlist.body.claimlist[i].status);
+                        }
 
 
+                        console.log("filteredclaims array " + filteredclaims);
+                        for (let i = 0; i < filteredclaims.length; i++) {
+                            if (filteredclaims[i].claimsettleddate !== "0001-01-01T00:00:00Z") {
 
+                                var date1 = new Date(filteredclaims[i].claimnotifieddate);
+                                console.log("date1" + date1);
+                                var date2 = new Date(filteredclaims[i].claimsettleddate);
+                                console.log("date1" + date2);
+                                var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+                                var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                                console.log("diffDays" + diffDays);
+                                daysDifference.push(diffDays)
+                                console.log("daysDifference" + daysDifference);
+                                var total = 0;
+                                for (let i = 0; i < daysDifference.length; i++) {
+                                    total += daysDifference[i];
                                 }
+                                var averagedays = total / daysDifference.length;
+                                var longest = Math.max.apply(null, daysDifference)
+                                var shortest = Math.min.apply(null, daysDifference)
+
+
+
                             }
+                        }
 
 
-                        }
-                        if (result.claimlist.body.claimlist[i].publicadjusterid === id) {
-                            status.push(result.claimlist.body.claimlist[i].status);
-                            countstatus = count(status);
-                        }
                     }
+
+                    if (result.claimlist.body.claimlist[i].status == "Notified" || result.claimlist.body.claimlist[i].status == "Submitted" || result.claimlist.body.claimlist[i].status == "Examined") {
+                        status.push(result.claimlist.body.claimlist[i].status);
+                        countstatus = count(status);
+                    }
+
                 }
+
                 return res.json({
                     message: "user claims found",
                     userClaims: filteredclaims,
                     statuscount: countstatus,
+                    statuscount1: countstatus1,
                     Average: averagedays,
                     Longest: longest,
                     Shortest: shortest
