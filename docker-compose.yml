@@ -1,8 +1,8 @@
 version: '2'
 services:
   web:
-    image: rapidqube/marin-service
-    container_name: marin-service
+    image: arun1705/CommercialInsurancenode
+    container_name:Commercial-Insurance
     ports:
      - "8082:8082"
     #command: CI-service start
