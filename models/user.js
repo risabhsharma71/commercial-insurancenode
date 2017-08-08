@@ -22,8 +22,6 @@ const userSchema = mongoose.Schema({
 
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/commercialInsurance', {
-    useMongoClient: true
-});
+mongoose.connect('mongodb://rpqbci:rpqb123@ds163721.mlab.com:63721/commercialinsurance', { useMongoClient: true });
 
 module.exports = mongoose.model('user', userSchema);
