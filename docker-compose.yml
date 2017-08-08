@@ -1,0 +1,8 @@
+version: '1'
+services:
+  web:
+    image: arun1705/CommercialInsurancenode
+    container_name:Commercial-Insurance
+    ports:
+     - "8082:8082"
+    #command: marin-service start
