@@ -7,4 +7,5 @@ RUN npm install
 RUN npm install date-and-time --save
 RUN npm install --save body-parser
 RUN npm install --save multer
+RUN npm install --save cors
 CMD ["node", "app.js"]
