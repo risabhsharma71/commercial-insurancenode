@@ -977,15 +977,18 @@ module.exports = router => {
                     console.log("userid" + result.claimlist.body.claimlist[i].userid);
                     if (id === id) {
 
-                        if (result.claimlist.body.claimlist[i].status == "Validated") {
+                         if (result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
                             filteredclaims.push(result.claimlist.body.claimlist[i]);
-                            status1.push(result.claimlist.body.claimlist[i].status);
-                            countstatus1 = count(status1);
-                        } else if (result.claimlist.body.claimlist[i].status == "Approved") {
-                            status.push(result.claimlist.body.claimlist[i].status);
-                        } else if (result.claimlist.body.claimlist[i].status == "Settled") {
-                            status.push(result.claimlist.body.claimlist[i].status);
-                        }
+                            if (result.claimlist.body.claimlist[i].status == "Validated") {
+                                status1.push(result.claimlist.body.claimlist[i].status);
+                                countstatus1 = count(status1);
+                            } else if (result.claimlist.body.claimlist[i].status == "Approved") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            } else if (result.claimlist.body.claimlist[i].status == "Settled") {
+                                status.push(result.claimlist.body.claimlist[i].status);
+                            }
+
+                            countstatus = count(status);
 
 
                         console.log("filteredclaims array " + filteredclaims);
