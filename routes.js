@@ -36,7 +36,7 @@ const fetchClaimlist = require('./functions/fetchClaimlist');
 
 module.exports = router => {
 
-    router.get('/', (req, res) => res.end('Welcome to p2plending,please hit a service !'));
+    router.get('/', (req, res) => res.send('Welcome to p2plending,please hit a service !'));
     router.post('/registerUser', cors(), (req, res) => {
         console.log("entering register function in functions");
         const firstname = req.body.firstname;
