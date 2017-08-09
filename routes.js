@@ -1037,6 +1037,7 @@ module.exports = router => {
                     Shortest: shortest
 
                 });
+                }
             })
 
             .catch(err => res.status(err.status).json({
