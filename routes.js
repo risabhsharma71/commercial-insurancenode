@@ -1024,7 +1024,7 @@ module.exports = router => {
                         status.push(result.claimlist.body.claimlist[i].status);
                         countstatus = count(status);
                     }
-
+                    }
                 }
 
                 return res.json({
@@ -1037,7 +1037,7 @@ module.exports = router => {
                     Shortest: shortest
 
                 });
-                }
+                
             })
 
             .catch(err => res.status(err.status).json({
