@@ -976,7 +976,7 @@ module.exports = router => {
                 for (let i = 0; i < result.claimlist.body.claimlist.length; i++) {
                     console.log("id" + id);
                     console.log("userid" + result.claimlist.body.claimlist[i].userid);
-                    if (id === id) {
+                    if (result.claimlist.body.claimlist[i].publicadjusterid === id) {
 
                          if (result.claimlist.body.claimlist[i].status == "Validated" || result.claimlist.body.claimlist[i].status == "Approved" || result.claimlist.body.claimlist[i].status == "Settled") {
                             filteredclaims.push(result.claimlist.body.claimlist[i]);
